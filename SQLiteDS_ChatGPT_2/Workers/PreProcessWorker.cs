@@ -6,8 +6,8 @@ namespace SQLiteDS_ChatGPT_2.Workers
     {
         public Task RunAsync() => Task.Run(async () =>
         {
-            var reader = ChannelHub.FeedChannel.Reader;
-            var writer = ChannelHub.ProcessChannel.Writer;
+            var reader = ChannelHub_1.FeedChannel.Reader;
+            var writer = ChannelHub_1.ProcessChannel.Writer;
 
             while (await reader.WaitToReadAsync())
             {

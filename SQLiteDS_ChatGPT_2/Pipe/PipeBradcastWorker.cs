@@ -14,7 +14,7 @@ namespace SQLiteDS_ChatGPT_2.Pipe
 
         public Task RunAsync() => Task.Run(async () =>
         {
-            var reader = ChannelHub.PipeChannel.Reader;
+            var reader = ChannelHub_1.PipeChannel.Reader;
             byte[] header = new byte[4];
 
             while (await reader.WaitToReadAsync())

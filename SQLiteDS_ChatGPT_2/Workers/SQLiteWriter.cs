@@ -26,7 +26,7 @@ namespace SQLiteDS_ChatGPT_2.Workers
 
         public Task RunAsync() => Task.Run(async () =>
         {
-            var reader = ChannelHub.WriteChannel.Reader;
+            var reader = ChannelHub_1.WriteChannel.Reader;
 
             using var txCmd = _conn.CreateCommand();
             txCmd.CommandText = "BEGIN IMMEDIATE;";

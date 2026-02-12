@@ -7,9 +7,9 @@ namespace SQLiteDS_ChatGPT_2.Workers
     {
         public Task RunAsync() => Task.Run(async () =>
         {
-            var reader = ChannelHub.ProcessChannel.Reader;
-            var dbWriter = ChannelHub.WriteChannel.Writer;
-            var pipeWriter = ChannelHub.PipeChannel.Writer;
+            var reader = ChannelHub_1.ProcessChannel.Reader;
+            var dbWriter = ChannelHub_1.WriteChannel.Writer;
+            var pipeWriter = ChannelHub_1.PipeChannel.Writer;
 
             var buffer = new List<Tick>(EngineConfig.BatchSize);
             var sw = Stopwatch.StartNew();
