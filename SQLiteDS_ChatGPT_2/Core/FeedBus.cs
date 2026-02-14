@@ -1,15 +1,40 @@
-﻿using System.Threading.Channels;
+﻿using SQLiteDS_ChatGPT_2.Pipe;
+using SQLiteDS_ChatGPT_2.Workers;
+using System.Threading.Channels;
 
 namespace SQLiteDS_ChatGPT_2.Core
 {
-    public static class FeedBus
+    public class FeedBus
     {
-        private static ChannelWriter<Tick> Writer =>
-                    ChannelHub_1.FeedChannel.Writer;
+        private readonly SQLiteWriter _writer;
+        private readonly BinaryPipeServer _pipe;
 
-        public static bool TryPublish(in Tick tick)
+        private long _globalSeq = 0;
+
+        public event Action<UiPacket>? OnUi;
+
+        public FeedBus(SQLiteWriter writer, BinaryPipeServer pipe)
         {
-            return Writer.TryWrite(tick);
+            _writer = writer;
+            _pipe = pipe;
+        }
+        readonly WorkType[] Breaks = [WorkType.FutureCode, 
+            WorkType.OptionCode, WorkType.HighLow, WorkType.Master];
+        public void OnReceive(WorkType type, Basic model)
+        {
+            long seq = Interlocked.Increment(ref _globalSeq);
+            model.Seq = seq;
+
+            _writer.Enqueue(type,  model);
+            _pipe.Send(type, model);
+
+            if (Breaks.Contains(type)) return;
+
+            long time = DateTime.Now.Ticks;
+
+            var ui = UiPacketFactory.Create(type, model, time, seq);
+            if (ui != null)
+                OnUi?.Invoke(ui);
         }
     }
 }

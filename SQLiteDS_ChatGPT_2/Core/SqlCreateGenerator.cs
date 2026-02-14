@@ -18,42 +18,6 @@ namespace SQLiteDS_ChatGPT_2.Core
                 sb.AppendLine(GenerateCreate(attr.TableName, attr.ModelType));
                 sb.AppendLine();
             }
-                //sb.AppendLine($"CREATE TABLE IF NOT EXISTS [{attr.TableName}] (");
-                //sb.AppendLine(" [Idx] INTEGER PRIMARY KEY,");
-
-                //var props = attr.ModelType.GetProperties()
-                //    .Where(p => p.Name != "Idx")
-                //    .ToList();
-                
-                //foreach (var p in props)
-                //{
-                //    string sqlType = MapType(p.PropertyType);
-                //    sb.AppendLine($"{p.Name} {sqlType},");
-                //}
-
-                //sb.Length -= 3; // 마지막 콤마 제거
-                //sb.AppendLine("\n) WITHOUT ROWID;");
-
-                //    if (tableName.Contains("Code"))
-                //    {
-                //        sb.AppendLine($"CREATE INDEX IF NOT EXISTS IDX_{tableName}_Code ON [{tableName}] (Code);");
-                //    }
-
-                //    if (!tableName.Equals("tblWork"))
-                //    {
-                //        sb.AppendLine($"CREATE TRIGGER IF NOT EXISTS trg_Log{tableName} ");
-                //        sb.AppendLine($"AFTER INSERT ON [{tableName}] ");
-                //        sb.AppendLine("BEGIN");
-                //        sb.AppendLine($"    INSERT INTO tblWork (TableId, ForeignKey) ");
-                //        sb.AppendLine($"    VALUES ({(int)type}, NEW.Idx);");
-                //        sb.AppendLine("END;");
-                //    }
-                //    sb.AppendLine();
-            //}
-
-            //sb.AppendLine("CREATE UNIQUE INDEX IF NOT EXISTS idxWorkID ON [tblWork] (TableId, ForeignKey);");
-            //sb.AppendLine("CREATE UNIQUE INDEX IF NOT EXISTS idxHighLow ON [tblHighLow] (Code, Date);");
-            //sb.AppendLine();
 
             return sb.ToString();
         }
@@ -69,11 +33,14 @@ namespace SQLiteDS_ChatGPT_2.Core
                 if (!p.CanWrite) continue;
 
                 var sqlType = MapType(p.PropertyType);
-                sb.AppendLine($"[{p.Name}] {sqlType},");
+                if (p.Name == "Idx")
+                    sb.AppendLine($"[{p.Name}] {sqlType} PRIMARY KEY AUTOINCREMENT, ");
+                else
+                    sb.AppendLine($"[{p.Name}] {sqlType},");
             }
 
             sb.Length -= 3;
-            sb.AppendLine("\n) WITHOUT ROWID;");
+            sb.AppendLine("\n);");// WITHOUT ROWID;");
 
             return sb.ToString();
         }
@@ -91,11 +58,10 @@ namespace SQLiteDS_ChatGPT_2.Core
                 t = t.BaseType!;
             }
 
-            return list
+            return [.. list
                 .GroupBy(p => p.Name)
                 .Select(g => g.First())
-                .OrderBy(p => p.Name == "Idx" ? 0 : 1)
-                .ToList();
+                .OrderBy(p => p.Name == "Idx" ? 0 : 1)];
         }
 
         private static string MapType(Type t)

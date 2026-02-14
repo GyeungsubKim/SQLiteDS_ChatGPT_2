@@ -32,6 +32,14 @@ namespace SQLiteDS_ChatGPT_2.Core
             }
         }
 
+        public static TableInfoAttribute GetTableInfo(this WorkType type)
+        {
+            var field = typeof(WorkType).GetField(type.ToString()) 
+                ?? throw new Exception($"WorkType field not found: {type}");
+            var attr = field.GetCustomAttribute<TableInfoAttribute>()
+                ?? throw new Exception($"TableInfoAttribute missing: {type}");
+            return attr;
+        }
         // 확장 메서드: 각 WorkType에 대해 테이블명/SELECT/INSERT SQL 제공
         public static string GetTableName(this WorkType type) => _cache[type].TableName;
         public static string GetSelectSql(this WorkType type) => _cache[type].SelectSql;
