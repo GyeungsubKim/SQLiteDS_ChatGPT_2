@@ -1,37 +1,66 @@
-﻿using System.Collections.Concurrent;
+﻿using SQLiteDS_ChatGPT_2.Core;
+using System.Collections.Concurrent;
+using System.IO;
 using System.IO.Pipes;
+using System.Threading.Channels;
 
 namespace SQLiteDS_ChatGPT_2.Pipe
 {
     public sealed class BinaryPipeServer
     {
-        private readonly ConcurrentDictionary<int, PipeSession> _clients = new();
-        private int _idGen;
+        private readonly Channel<(WorkType, Basic)> _channel;
 
-        public ConcurrentDictionary<int, PipeSession> Clients => _clients;
+        private CancellationTokenSource? _cts;
+        private Task? _task;
+
+        public BinaryPipeServer()
+        {
+            _channel = Channel.CreateUnbounded<(WorkType, Basic)> (
+                new UnboundedChannelOptions
+                {
+                    SingleReader = true,
+                    SingleWriter = false
+                });
+        }
 
         public void Start()
         {
-            _ = AcceptLoop();
+            _cts = new CancellationTokenSource();
+            _task = Task.Run(() => Run(_cts.Token));
         }
-
-        private async Task AcceptLoop()
+        public void Stop()
         {
-            while (true)
+            try
             {
-                var pipe = new NamedPipeServerStream(
-                    PipeConfig.PipeName,
-                    PipeDirection.Out,
-                    PipeConfig.MaxClients,
-                    PipeTransmissionMode.Byte,
-                    PipeOptions.Asynchronous,
-                    PipeConfig.PipeBufferSize,
-                    PipeConfig.PipeBufferSize);
+                _cts?.Cancel();
+                _task?.Wait(2000);
+            }
+            catch { }
+        }
+        public void Send(WorkType type, Basic model)
+            => _channel.Writer.TryWrite((type, model));
+        private async Task Run(CancellationToken token)
+        {
+            using var pipe = new NamedPipeServerStream(
+                PipeConfig.PipeName,
+                PipeDirection.Out,
+                1,
+                PipeTransmissionMode.Byte,
+                PipeOptions.Asynchronous);
 
-                await pipe.WaitForConnectionAsync();
+            await pipe.WaitForConnectionAsync(token);
 
-                var id = Interlocked.Increment(ref _idGen);
-                _clients[id] = new PipeSession(pipe);
+            using var bw = new BinaryWriter(pipe);
+
+            while (!token.IsCancellationRequested &&
+                await _channel.Reader.WaitToReadAsync(token))
+            { 
+                while (_channel.Reader.TryRead(out var item))
+                {
+                    bw.Write((int)item.Item1);
+                    item.Item2.WriteTo(bw);
+                    bw.Flush();
+                }
             }
         }
     }

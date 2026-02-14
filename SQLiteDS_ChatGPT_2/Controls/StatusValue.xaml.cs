@@ -10,14 +10,22 @@ namespace SQLiteDS_ChatGPT_2.Controls
     public partial class StatusValue : UserControl
     {
         private static readonly DependencyProperty ValueProperty =
-            DependencyProperty.Register("Value", typeof(string), typeof(StatusValue));
+            DependencyProperty.Register(
+                nameof(Value), 
+                typeof(string), 
+                typeof(StatusValue),
+                new PropertyMetadata(""));
         public string Value
         {
             get { return (string)GetValue(ValueProperty); }
             set { SetValue(ValueProperty, value); }
         }
         private static readonly DependencyProperty ValueBackgroundProperty =
-            DependencyProperty.Register("ValueBackground", typeof(Brush), typeof(StatusValue), new PropertyMetadata(Brushes.Transparent));
+            DependencyProperty.Register(
+                nameof(ValueBackground),
+                typeof(Brush),
+                typeof(StatusValue),
+                new PropertyMetadata(Brushes.Transparent));
         public Brush ValueBackground
         {
             get { return (Brush)GetValue(ValueBackgroundProperty); }
